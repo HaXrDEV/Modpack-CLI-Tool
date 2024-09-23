@@ -13,20 +13,6 @@ from mdutils import Html
 
 
 ##########################################################
-# Configuration
-
-export_client = True
-export_server = False
-
-refresh_only = False
-update_bcc_version = True
-cleanup_temp = True
-create_release_notes = True
-server_mods_remove_list = ["From-The-Fog-1.20-v1.9.2-Forge-Fabric.jar"]
-print_path_debug = True
-update_publish_workflow = True
-
-##########################################################
 # Variables
 user_path = os.path.expanduser("~")
 
@@ -46,6 +32,27 @@ bcc_server_config_path = serverpack_path + "config\\bcc.json"
 export_path = git_path + "\\Export\\"
 tempfolder_path = export_path + "temp\\"
 temp_mods_path = tempfolder_path + "mods\\"
+settings_path = git_path + "\\CLI Tools\\settings.yml"
+
+##########################################################
+# Configuration
+
+yaml2 = YAML()
+with open(settings_path, "r") as s_file:
+    settings_yml = yaml2.load(s_file)
+
+minecraft_version = settings_yml['minecraft_version']
+export_client = settings_yml['export_client']
+export_server = settings_yml['export_server']
+
+refresh_only = settings_yml['refresh_only']
+update_bcc_version = settings_yml['update_bcc_version']
+cleanup_temp = settings_yml['cleanup_temp']
+create_release_notes = settings_yml['create_release_notes']
+server_mods_remove_list = settings_yml['server_mods_remove_list']
+print_path_debug = settings_yml['print_path_debug']
+update_publish_workflow = settings_yml['update_publish_workflow']
+
 
 if print_path_debug:
     print("[DEBUG] " + git_path)

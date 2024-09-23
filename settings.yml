@@ -1,0 +1,13 @@
+modpack_name: "Cubescape"
+minecraft_version: "1.21.1"
+
+export_client: True
+export_server: False
+
+refresh_only: False
+update_bcc_version: True
+cleanup_temp: True
+create_release_notes: True
+server_mods_remove_list: []
+print_path_debug: True
+update_publish_workflow: True
