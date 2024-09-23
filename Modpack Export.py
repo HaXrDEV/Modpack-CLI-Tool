@@ -16,9 +16,6 @@ from mdutils import Html
 # Variables
 user_path = os.path.expanduser("~")
 
-modpack_name = "Cubescape"
-minecraft_version = "1.21.1"
-
 # Get path of project dynamically.
 script_path = __file__
 git_path = str(os.path.dirname(os.path.dirname(script_path))).replace("/","\\") # .replace("/","\\") is to ensure that the path will be in the Windows format.
@@ -41,6 +38,7 @@ yaml2 = YAML()
 with open(settings_path, "r") as s_file:
     settings_yml = yaml2.load(s_file)
 
+modpack_name = settings_yml['modpack_name']
 minecraft_version = settings_yml['minecraft_version']
 export_client = settings_yml['export_client']
 export_server = settings_yml['export_server']
