@@ -32,7 +32,7 @@ bcc_server_config_path = serverpack_path + "config\\bcc.json"
 export_path = git_path + "\\Export\\"
 tempfolder_path = export_path + "temp\\"
 temp_mods_path = tempfolder_path + "mods\\"
-settings_path = git_path + "\\CLI Tools\\settings.yml"
+settings_path = git_path + "\\Modpack-CLI-Tool\\settings.yml"
 
 ##########################################################
 # Configuration
