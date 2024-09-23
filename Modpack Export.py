@@ -158,7 +158,7 @@ def main():
         subprocess.call(f"{packwiz_exe_path} refresh", shell=True)
 
         # Packwiz exporting
-        file = f'{modpack_name}-{pack_version}.zip'
+        file = f'{modpack_name}-{minecraft_version}-{pack_version}.zip'
         if export_client:
             # Export CF modpack using Packwiz.
             subprocess.call(f"{packwiz_exe_path} cf export", shell=True)
@@ -172,7 +172,7 @@ def main():
         if export_server:
             # Export CF modpack using Packwiz.
             subprocess.call(f"{packwiz_exe_path} cf export -s server", shell=True)
-            file_server_name = f'{modpack_name}-Server-{pack_version}.zip'
+            file_server_name = f'{modpack_name}-ServerPack-{minecraft_version}-{pack_version}.zip'
             move(file, f"{export_path}{file_server_name}")
             print("[PackWiz] Server exported.")
 
