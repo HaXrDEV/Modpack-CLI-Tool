@@ -38,8 +38,6 @@ yaml2 = YAML()
 with open(settings_path, "r") as s_file:
     settings_yml = yaml2.load(s_file)
 
-modpack_name = settings_yml['modpack_name']
-minecraft_version = settings_yml['minecraft_version']
 export_client = settings_yml['export_client']
 export_server = settings_yml['export_server']
 
@@ -50,7 +48,7 @@ create_release_notes = settings_yml['create_release_notes']
 server_mods_remove_list = settings_yml['server_mods_remove_list']
 print_path_debug = settings_yml['print_path_debug']
 update_publish_workflow = settings_yml['update_publish_workflow']
-
+bh_banner = settings_yml['bh_banner']
 
 if print_path_debug:
     print("[DEBUG] " + git_path)
@@ -67,8 +65,10 @@ def main():
     with open(packwiz_manifest, "r") as f:
         pack_toml = toml.load(f)
     pack_version = pack_toml["version"]
+    modpack_name = pack_toml["name"]
+    minecraft_version = pack_toml["versions"]["minecraft"]
     
-
+    
     if not refresh_only:
         
         ##########################################################
@@ -107,7 +107,7 @@ def main():
             
             md_element_full_changelog = f"#### **[[Full Changelog]](https://wiki.crismpack.net/modpacks/{modpack_name.lower()}/changelog/{minecraft_version}#v{pack_version})**"
             md_element_pre_release = '**This is a pre-release. Here be dragons!**'
-            md_element_bh_banner = "[![BisectHosting Banner](https://github.com/CrismPack/CDN/blob/main/desc/insomnia/bhbanner.png?raw=true)](https://bisecthosting.com/CRISM)"
+            md_element_bh_banner = f"[![BisectHosting Banner]({bh_banner})](https://bisecthosting.com/CRISM)"
             md_element_crism_spacer = "![CrismPack Spacer](https://github.com/CrismPack/CDN/blob/main/desc/breakneck/79ESzz1-tiny.png?raw=true)"
             # html_element_bh_banner = "<p><a href='https://bisecthosting.com/CRISM'><img src='https://github.com/CrismPack/CDN/blob/main/desc/insomnia/bhbanner.png?raw=true' width='800' /></a></p>"
 
@@ -158,7 +158,7 @@ def main():
         subprocess.call(f"{packwiz_exe_path} refresh", shell=True)
 
         # Packwiz exporting
-        file = f'{modpack_name}-{minecraft_version}-{pack_version}.zip'
+        file = f'{modpack_name}-{pack_version}.zip'
         if export_client:
             # Export CF modpack using Packwiz.
             subprocess.call(f"{packwiz_exe_path} cf export", shell=True)
@@ -172,7 +172,7 @@ def main():
         if export_server:
             # Export CF modpack using Packwiz.
             subprocess.call(f"{packwiz_exe_path} cf export -s server", shell=True)
-            file_server_name = f'{modpack_name}-ServerPack-{minecraft_version}-{pack_version}.zip'
+            file_server_name = f'{modpack_name}-Server-{pack_version}.zip'
             move(file, f"{export_path}{file_server_name}")
             print("[PackWiz] Server exported.")
 
@@ -184,7 +184,7 @@ def main():
             copytree("Server Pack", tempfolder_path) # Copies contents of "Server Pack" folder into the temp folder.
 
             # Console input.
-            server_mods_path = input(f'Create a new modpack instance in the CurseForge launcher using the {modpack_name}-ServerPack-{minecraft_version}-{pack_version}.zip file. Then drag the mods folder from that instance into the terminal (No spaces allowed for the source directory): ')
+            server_mods_path = input(f'Create a new modpack instance in the CurseForge launcher using the {file_server_name} file. Then drag the mods folder from that instance into the terminal (No spaces allowed for the source directory): ')
             
             copytree(server_mods_path, temp_mods_path, dirs_exist_ok=True)
             
