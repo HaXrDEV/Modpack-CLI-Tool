@@ -19,8 +19,10 @@ from ruamel.yaml import YAML
 from mdutils.mdutils import MdUtils
 from mdutils import Html
 
-##########################################################
+
+############################################################
 # Variables
+
 user_path = os.path.expanduser("~")
 
 # Get path of project dynamically.
@@ -38,7 +40,8 @@ tempfolder_path = export_path + "temp\\"
 temp_mods_path = tempfolder_path + "mods\\"
 settings_path = git_path + "\\settings.yml"
 
-##########################################################
+
+############################################################
 # Functions
 
 def determine_server_export():
@@ -53,7 +56,7 @@ def determine_server_export():
         return False
 
 
-##########################################################
+############################################################
 # Configuration
 
 with open(settings_path, "r") as s_file:
@@ -61,7 +64,6 @@ with open(settings_path, "r") as s_file:
 
 export_client = settings_yml['export_client']
 export_server = determine_server_export()
-
 
 refresh_only = settings_yml['refresh_only']
 update_bcc_version = settings_yml['update_bcc_version']
@@ -80,6 +82,9 @@ if print_path_debug:
     print("[DEBUG] " + bcc_server_config_path)
 
 
+############################################################
+# Main Program
+
 def main():
     os.chdir(packwiz_path)
     
@@ -92,10 +97,10 @@ def main():
     
     
     if not refresh_only:
-        
-        ##########################################################
-        # Update publish workflow values.
 
+        #----------------------------------------
+        # Update publish workflow values.
+        #----------------------------------------
         if update_publish_workflow:
             yaml2 = YAML()
 
@@ -119,8 +124,9 @@ def main():
                 yaml2.dump(publish_workflow_yml, pw_file)
         
 
-        ##########################################################
+        #----------------------------------------
         # Create release notes.
+        #----------------------------------------
 
         # Parse the related changelog file for overview details and create release markdown files for CF and MR.
         if create_release_notes:
@@ -153,8 +159,9 @@ def main():
             mdFile_CF.create_md_file()
 
 
-        ##########################################################
-        # Update BCC version number
+        #----------------------------------------
+        # Update BCC version number.
+        #----------------------------------------
 
         if update_bcc_version:
             os.chdir(packwiz_path)
@@ -172,8 +179,9 @@ def main():
                 json.dump(bcc_json, f)
 
 
-        ##########################################################
-        # Export client pack
+        #----------------------------------------
+        # Export client pack.
+        #----------------------------------------
         os.chdir(packwiz_path)
 
         # Refresh the packwiz index
@@ -188,9 +196,9 @@ def main():
             print("[PackWiz] Client exported.")
 
 
-        ##########################################################
+        #----------------------------------------
         # Export server pack
-
+        # ----------------------------------------
         if export_server:
             # Export CF modpack using Packwiz.
             subprocess.call(f"{packwiz_exe_path} cf export -s server", shell=True)
@@ -219,6 +227,10 @@ def main():
             os.chdir(export_path)
             make_archive(f"{modpack_name}-Server-{pack_version}", 'zip', tempfolder_path)
 
+
+        #----------------------------------------
+        # Temp cleanup
+        #----------------------------------------
         if cleanup_temp and os.path.isdir(tempfolder_path):
             rmtree(tempfolder_path)
             print("Temp folder cleanup finished.")
