@@ -6,11 +6,11 @@ from shutil import rmtree, make_archive, move, copytree
 from pathlib import Path
 
 import toml  # pip install toml
-import yaml
 from ruamel.yaml import YAML
 from mdutils.mdutils import MdUtils
 from mdutils import Html
 
+yaml = YAML()
 
 ##########################################################
 # Variables
@@ -34,9 +34,8 @@ settings_path = git_path + "\\settings.yml"
 ##########################################################
 # Configuration
 
-yaml2 = YAML()
 with open(settings_path, "r") as s_file:
-    settings_yml = yaml2.load(s_file)
+    settings_yml = yaml.load(s_file)
 
 export_client = settings_yml['export_client']
 export_server = settings_yml['export_server']
@@ -75,12 +74,10 @@ def main():
         # Update publish workflow values.
 
         if update_publish_workflow:
-            yaml2 = YAML()
-            
             publish_workflow_path = git_path + f"\\.github\\workflows\\publish.yml"
 
             with open(publish_workflow_path, "r") as pw_file:
-                publish_workflow_yml = yaml2.load(pw_file)
+                publish_workflow_yml = yaml.load(pw_file)
 
             publish_workflow_yml['env']['MC_VERSION'] = minecraft_version
 
@@ -94,7 +91,7 @@ def main():
             publish_workflow_yml['env']['RELEASE_TYPE'] = pw_release_type
 
             with open(publish_workflow_path, "w") as pw_file:
-                yaml2.dump(publish_workflow_yml, pw_file)
+                yaml.dump(publish_workflow_yml, pw_file)
         
 
         ##########################################################
@@ -112,7 +109,7 @@ def main():
             # html_element_bh_banner = "<p><a href='https://bisecthosting.com/CRISM'><img src='https://github.com/CrismPack/CDN/blob/main/desc/insomnia/bhbanner.png?raw=true' width='800' /></a></p>"
 
             with open(changelog_path, "r") as f:
-                changelog_yml = yaml.safe_load(f)
+                changelog_yml = yaml.load(f)
             update_overview = changelog_yml['Update overview']
             #update_overview = update_overview.replace("-","### -")
 
