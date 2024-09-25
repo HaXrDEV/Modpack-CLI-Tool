@@ -1,3 +1,11 @@
+input("""
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█                           █
+█  HaXr's Modpack CLI Tool  █
+█                           █
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+Press Enter to continue...""")
+
 import os
 import os.path
 import json
@@ -37,7 +45,7 @@ def determine_server_export():
     """This method determines whether whether the server pack should be exported or not and returns a boolean."""
     export_server_val = settings_yml['export_server']
     if export_server_val:
-        if input("Want to export server pack? [Y]: ") in ("y", "Y", None, ""):
+        if input("Want to export server pack? [N]: ") in ("y", "Y", "yes", "Yes"):
             return True
         else:
             return False
