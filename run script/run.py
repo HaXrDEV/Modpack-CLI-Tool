@@ -1,4 +1,5 @@
-# This script automatically grabs the latest version of HaXrDEV's Modpack-CLI-Tool and runs it
+# This script automatically grabs the latest version of HaXrDEV's Modpack-CLI-Tool and runs it.
+# v1
 
 import os
 import os.path
