@@ -123,8 +123,8 @@ def main():
 
             mdFile_CF.new_paragraph(update_overview)
             mdFile_CF.new_paragraph(md_element_full_changelog)
-            # mdFile_CF.new_paragraph("<br>")
-            # mdFile_CF.new_paragraph(md_element_bh_banner)
+            mdFile_CF.new_paragraph("<br>")
+            mdFile_CF.new_paragraph(md_element_bh_banner)
             mdFile_CF.create_md_file()
 
 
