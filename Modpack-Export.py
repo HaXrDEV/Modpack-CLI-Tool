@@ -31,13 +31,29 @@ temp_mods_path = tempfolder_path + "mods\\"
 settings_path = git_path + "\\settings.yml"
 
 ##########################################################
+# Functions
+
+def determine_server_export():
+    """This method determines whether whether the server pack should be exported or not and returns a boolean."""
+    export_server_val = settings_yml['export_server']
+    if export_server_val:
+        if input("Want to export server pack? [Y]: ") in ("y", "Y", None, ""):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+##########################################################
 # Configuration
 
 with open(settings_path, "r") as s_file:
     settings_yml = yaml.safe_load(s_file)
 
 export_client = settings_yml['export_client']
-export_server = settings_yml['export_server']
+export_server = determine_server_export()
+
 
 refresh_only = settings_yml['refresh_only']
 update_bcc_version = settings_yml['update_bcc_version']
