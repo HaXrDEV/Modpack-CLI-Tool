@@ -1,4 +1,4 @@
-# This script automatically grabs the latest version of HaXrDEV's Modpack-CLI-Tool and runs it
+# This script automatically grabs the latest version of HaXrDEV's Modpack-CLI-Tool.
 # v2
 
 import os
@@ -25,4 +25,4 @@ else:
     shutil.rmtree(CLI_TOOL_PATH, onerror=on_rm_error)
     git.Repo.clone_from("https://github.com/HaXrDEV/Modpack-CLI-Tool", CLI_TOOL_PATH)
 
-subprocess.run(["cmd.exe", f"{CLI_TOOL_PATH}\\Modpack-Export.bat"])
+# subprocess.run(["python", f"{CLI_TOOL_PATH}\\Modpack-Export.py"])
