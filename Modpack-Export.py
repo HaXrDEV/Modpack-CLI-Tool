@@ -55,6 +55,12 @@ def determine_server_export():
     else:
         return False
 
+def markdown_overview_maker(lines):
+    """This method takes a yml object of strings, formats them and returns the result."""
+    processed_lines = []
+    for line in lines:
+        processed_lines.append("- " + line)
+    return """{}""".format("\n".join(processed_lines[0:]))
 
 ############################################################
 # Configuration
@@ -146,13 +152,11 @@ def main():
 
             mdFile_CF = MdUtils(file_name='CurseForge-Release')
             
-            print(update_overview)
-            
             if "beta" in pack_version or "alpha" in pack_version:
                 print("pack_version = " + pack_version)
                 mdFile_CF.new_paragraph(md_element_pre_release)
 
-            mdFile_CF.new_paragraph(update_overview)
+            mdFile_CF.new_paragraph(markdown_overview_maker(update_overview))
             mdFile_CF.new_paragraph(md_element_full_changelog)
             mdFile_CF.new_paragraph("<br>")
             mdFile_CF.new_paragraph(md_element_bh_banner)
