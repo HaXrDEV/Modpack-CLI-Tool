@@ -39,7 +39,7 @@ export_path = git_path + "\\Export\\"
 tempfolder_path = export_path + "temp\\"
 temp_mods_path = tempfolder_path + "mods\\"
 settings_path = git_path + "\\settings.yml"
-
+packwiz_mods_path = packwiz_path + "mods\\"
 
 ############################################################
 # Functions
@@ -72,6 +72,28 @@ def remove_bracketed_text(input_str):
     
     # Return the cleaned string
     return result.strip()
+
+def parse_active_projects(input_path):
+    """This method takes a path as input and parses the pw.toml files inside, returning the names of activate projects in a list."""
+    active_project = []
+    for mod_toml in os.listdir(input_path):
+        mod_toml_path = input_path + mod_toml
+        try:
+            with open(mod_toml_path, "r", encoding="utf8") as f:
+                mod_toml = toml.load(f)
+                side = str(mod_toml['side'])
+                if side in ("both", "client", "server"):
+                    mod_name = remove_bracketed_text(mod_toml['name'])
+                    
+                    if side == "both":
+                        active_project.append(mod_name)
+                    else:
+                        active_project.append(f"{mod_name} [{side.capitalize()}]")
+        except Exception as ex:
+            print(ex, mod_toml)
+    return active_project
+
+print(markdown_list_maker(parse_active_projects(packwiz_mods_path)))
 
 ############################################################
 # Configuration
@@ -113,32 +135,7 @@ def main():
     minecraft_version = pack_toml["versions"]["minecraft"]
 
     if not refresh_only:
-    
-        #----------------------------------------
-        # Parse active mods.
-        #----------------------------------------
-        mods_dir = packwiz_path + "mods\\"
-        active_mods = []
-        for mod_toml in os.listdir(mods_dir):
-            mod_toml_path = mods_dir + mod_toml
-            try:
-                with open(mod_toml_path, "r", encoding="utf8") as f:
-                    mod_toml = toml.load(f)
-                    side = str(mod_toml['side'])
-                    if side in ("both", "client", "server"):
-                        mod_name = remove_bracketed_text(mod_toml['name'])
-                        
-                        if side == "both":
-                            active_mods.append(mod_name)
-                        else:
-                            active_mods.append(f"{mod_name} [{side.capitalize()}]")
-            except Exception as ex:
-                print(ex, mod_toml)
-
-        #print(active_mods)
-        print(markdown_list_maker(active_mods))
-    
-
+        
         #----------------------------------------
         # Update publish workflow values.
         #----------------------------------------
