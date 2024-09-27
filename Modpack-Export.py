@@ -180,7 +180,7 @@ def main():
             md_element_crism_spacer = "![CrismPack Spacer](https://github.com/CrismPack/CDN/blob/main/desc/breakneck/79ESzz1-tiny.png?raw=true)"
             # html_element_bh_banner = "<p><a href='https://bisecthosting.com/CRISM'><img src='https://github.com/CrismPack/CDN/blob/main/desc/insomnia/bhbanner.png?raw=true' width='800' /></a></p>"
 
-            with open(changelog_path, "r") as f:
+            with open(changelog_path, "r", encoding="utf8") as f:
                 changelog_yml = yaml.safe_load(f)
             update_overview = changelog_yml['Update overview']
             #update_overview = update_overview.replace("-","### -")
