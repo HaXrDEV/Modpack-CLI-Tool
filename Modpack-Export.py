@@ -18,7 +18,7 @@ import yaml # pip install PyYAML
 from ruamel.yaml import YAML
 from mdutils.mdutils import MdUtils
 from mdutils import Html
-
+import re
 
 ############################################################
 # Variables
@@ -55,12 +55,23 @@ def determine_server_export():
     else:
         return False
 
-def markdown_overview_maker(lines):
+def markdown_list_maker(lines):
     """This method takes a yml object of strings, formats them and returns the result."""
     processed_lines = []
     for line in lines:
         processed_lines.append("- " + line)
     return """{}""".format("\n".join(processed_lines[0:]))
+
+def remove_bracketed_text(input_str):
+    """This method takes an input string and removes any text surrounded by parentheses (), square brackets [], and curly braces {}."""
+    # Define a pattern to match text within parentheses (), square brackets [], and curly braces {}
+    pattern = r'\(.*?\)|\[.*?\]|\{.*?\}'
+    
+    # Use re.sub() to replace the matched text with an empty string
+    result = re.sub(pattern, '', input_str)
+    
+    # Return the cleaned string
+    return result.strip()
 
 ############################################################
 # Configuration
@@ -101,6 +112,31 @@ def main():
     modpack_name = pack_toml["name"]
     minecraft_version = pack_toml["versions"]["minecraft"]
     
+    
+    #----------------------------------------
+    # Parse active mods.
+    #----------------------------------------
+    mods_dir = packwiz_path + "mods\\"
+    active_mods = []
+
+    for mod_toml in os.listdir(mods_dir):
+        mod_toml_path = mods_dir + mod_toml
+        try:
+            with open(mod_toml_path, "r", encoding="utf8") as f:
+                mod_toml = toml.load(f)
+                side = str(mod_toml['side'])
+                if side in ("both", "client", "server"):
+                    mod_name = remove_bracketed_text(mod_toml['name'])
+                    
+                    if side == "both":
+                        active_mods.append(mod_name)
+                    else:
+                        active_mods.append(f"{mod_name} [{side.capitalize()}]")
+        except Exception as ex:
+            print(ex, mod_toml)
+
+    #print(active_mods)
+    print(markdown_list_maker(active_mods))
     
     if not refresh_only:
 
@@ -156,7 +192,7 @@ def main():
                 print("pack_version = " + pack_version)
                 mdFile_CF.new_paragraph(md_element_pre_release)
 
-            mdFile_CF.new_paragraph(markdown_overview_maker(update_overview))
+            mdFile_CF.new_paragraph(markdown_list_maker(update_overview))
             mdFile_CF.new_paragraph(md_element_full_changelog)
             mdFile_CF.new_paragraph("<br>")
             mdFile_CF.new_paragraph(md_element_bh_banner)
