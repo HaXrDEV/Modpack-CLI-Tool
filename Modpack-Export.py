@@ -111,34 +111,33 @@ def main():
     pack_version = pack_toml["version"]
     modpack_name = pack_toml["name"]
     minecraft_version = pack_toml["versions"]["minecraft"]
-    
-    
-    #----------------------------------------
-    # Parse active mods.
-    #----------------------------------------
-    mods_dir = packwiz_path + "mods\\"
-    active_mods = []
 
-    for mod_toml in os.listdir(mods_dir):
-        mod_toml_path = mods_dir + mod_toml
-        try:
-            with open(mod_toml_path, "r", encoding="utf8") as f:
-                mod_toml = toml.load(f)
-                side = str(mod_toml['side'])
-                if side in ("both", "client", "server"):
-                    mod_name = remove_bracketed_text(mod_toml['name'])
-                    
-                    if side == "both":
-                        active_mods.append(mod_name)
-                    else:
-                        active_mods.append(f"{mod_name} [{side.capitalize()}]")
-        except Exception as ex:
-            print(ex, mod_toml)
-
-    #print(active_mods)
-    print(markdown_list_maker(active_mods))
-    
     if not refresh_only:
+    
+        #----------------------------------------
+        # Parse active mods.
+        #----------------------------------------
+        mods_dir = packwiz_path + "mods\\"
+        active_mods = []
+        for mod_toml in os.listdir(mods_dir):
+            mod_toml_path = mods_dir + mod_toml
+            try:
+                with open(mod_toml_path, "r", encoding="utf8") as f:
+                    mod_toml = toml.load(f)
+                    side = str(mod_toml['side'])
+                    if side in ("both", "client", "server"):
+                        mod_name = remove_bracketed_text(mod_toml['name'])
+                        
+                        if side == "both":
+                            active_mods.append(mod_name)
+                        else:
+                            active_mods.append(f"{mod_name} [{side.capitalize()}]")
+            except Exception as ex:
+                print(ex, mod_toml)
+
+        #print(active_mods)
+        print(markdown_list_maker(active_mods))
+    
 
         #----------------------------------------
         # Update publish workflow values.
