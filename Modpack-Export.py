@@ -132,6 +132,7 @@ def get_latest_release_version(owner, repo):
         return f"Error occurred: {err}"
 
 
+
 def compare_toml_files(dir1, dir2):
     # Initialize dictionaries to store TOML data
     toml_data_1 = {}
@@ -175,11 +176,12 @@ def compare_toml_files(dir1, dir2):
     return results
 
 
-def write_differences_to_markdown(differences, output_file=None):
+
+def write_differences_to_markdown(differences, input_modpack_name, version1, version2, output_file=None, ):
     markdown_lines = []
     
     # Title for the Markdown report
-    markdown_lines.append("# TOML Files Comparison Report\n")
+    markdown_lines.append(f"# {input_modpack_name} {version1} -> {version2}\n")
     
     # Added section
     if differences['added']:
@@ -251,6 +253,7 @@ for key, value in settings_yml.items():
     globals()[key] = value
 
 export_server = determine_server_export()
+prev_release_version = get_latest_release_version(repo_owner, repo_name)
 
 if print_path_debug:
     print("[DEBUG] " + git_path)
@@ -263,7 +266,7 @@ if print_path_debug:
 ############################################################
 # Class Objects
 
-downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch=get_latest_release_version(repo_owner, repo_name))
+downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch=prev_release_version)
 
 
 ############################################################
@@ -297,7 +300,7 @@ def main():
         # print(parse_active_projects(packwiz_mods_path, "filename"))
         # print(parse_active_projects(packwiz_mods_path, "filename"))
         differences = compare_toml_files(prev_release, packwiz_mods_path)
-        print(write_differences_to_markdown(differences, 'differences_report.md'))
+        print(write_differences_to_markdown(differences, modpack_name, prev_release_version, pack_version, git_path + f'\\Changelogs\\changelog_mods_{pack_version}.md'))
 
 
         #----------------------------------------
