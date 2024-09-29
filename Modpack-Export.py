@@ -1,10 +1,9 @@
-input("""
+launch_message = """
 ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 █                           █
 █  HaXr's Modpack CLI Tool  █
 █                           █
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-Press Enter to continue...""")
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀"""
 
 import os, sys
 import os.path
@@ -19,6 +18,7 @@ from ruamel.yaml import YAML
 from mdutils.mdutils import MdUtils
 from mdutils import Html
 import re
+import requests
 
 # GitHub Download
 from GitHubDownloader import AsyncGitHubDownloader
@@ -45,6 +45,7 @@ temp_mods_path = tempfolder_path + "mods\\"
 settings_path = git_path + "\\settings.yml"
 packwiz_mods_path = packwiz_path + "mods\\"
 prev_release = git_path + "\\Modpack-CLI-Tool\\prev_release"
+
 
 ############################################################
 # Functions
@@ -102,6 +103,137 @@ def parse_active_projects(input_path, parse_object):
 #print(markdown_list_maker(parse_active_projects(packwiz_mods_path, "name")))
 # print(markdown_list_maker(parse_active_projects(packwiz_mods_path, "filename")))
 
+def get_latest_release_version(owner, repo):
+    """
+    Retrieve the latest release version from a GitHub repository.
+
+    Parameters:
+    - owner (str): The owner of the GitHub repository (e.g., 'torvalds' for https://github.com/torvalds/linux).
+    - repo (str): The name of the GitHub repository (e.g., 'linux' for https://github.com/torvalds/linux).
+
+    Returns:
+    - str: The tag name of the latest release version, or a message if no release found.
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+    headers = {"Accept": "application/vnd.github.v3+json"}
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raise an error for bad status codes
+
+        data = response.json()
+
+        # Return the tag name of the latest release
+        return data.get("tag_name", "No releases found.")
+    
+    except requests.exceptions.HTTPError as http_err:
+        return f"HTTP error occurred: {http_err}"
+    except Exception as err:
+        return f"Error occurred: {err}"
+
+
+def compare_toml_files(dir1, dir2):
+    # Initialize dictionaries to store TOML data
+    toml_data_1 = {}
+    toml_data_2 = {}
+    
+    # Load TOML files from the first directory
+    for filename in os.listdir(dir1):
+        if filename.endswith('.toml'):
+            filepath = os.path.join(dir1, filename)
+            toml_data_1[filename] = toml.load(filepath)
+
+    # Load TOML files from the second directory
+    for filename in os.listdir(dir2):
+        if filename.endswith('.toml'):
+            filepath = os.path.join(dir2, filename)
+            toml_data_2[filename] = toml.load(filepath)
+
+    # Prepare to store results
+    results = {
+        'added': [],
+        'removed': [],
+        'modified': []
+    }
+
+    # Check for added and modified files
+    for filename, data in toml_data_2.items():
+        if filename not in toml_data_1:
+            results['added'].append(data.get('name', filename))
+        else:
+            # Compare "version" fields
+            version1 = toml_data_1[filename].get('filename', None)
+            version2 = data.get('filename', None)
+            if version1 != version2:
+                results['modified'].append((data.get('name', filename), version1, version2))
+
+    # Check for removed files
+    for filename in toml_data_1.keys():
+        if filename not in toml_data_2:
+            results['removed'].append(toml_data_1[filename].get('name', filename))
+
+    return results
+
+
+def write_differences_to_markdown(differences, output_file=None):
+    markdown_lines = []
+    
+    # Title for the Markdown report
+    markdown_lines.append("# TOML Files Comparison Report\n")
+    
+    # Added section
+    if differences['added']:
+        markdown_lines.append("## Added\n")
+        for name in differences['added']:
+            markdown_lines.append(f"- {name}")
+    else:
+        markdown_lines.append("## Added\n- None")
+    
+    # Removed section
+    if differences['removed']:
+        markdown_lines.append("## Removed\n")
+        for name in differences['removed']:
+            markdown_lines.append(f"- {name}")
+    else:
+        markdown_lines.append("## Removed\n- None")
+    
+    # Modified section
+    if differences['modified']:
+        markdown_lines.append("## Modified\n")
+        for name, old_version, new_version in differences['modified']:
+            markdown_lines.append(f"- **{name}**: Changed from `{old_version}` to `{new_version}`")
+    else:
+        markdown_lines.append("## Modified\n- None")
+    
+    # Join all lines into a single string
+    markdown_output = "\n".join(markdown_lines)
+    
+    # Write to a file if an output path is provided
+    if output_file:
+        with open(output_file, 'w', encoding="utf8") as f:
+            f.write(markdown_output)
+    
+    return markdown_output
+
+############################################################
+# Start Message
+
+os.chdir(packwiz_path)
+
+# Parse pack.toml for modpack version.
+with open(packwiz_manifest, "r") as f:
+    pack_toml = toml.load(f)
+pack_version = pack_toml["version"]
+modpack_name = pack_toml["name"]
+minecraft_version = pack_toml["versions"]["minecraft"]
+
+input(f"""{launch_message}
+Modpack: {modpack_name}
+Version: {pack_version}
+Minecraft: {minecraft_version}
+
+Press Enter to continue...""")
+
 
 ############################################################
 # Configuration
@@ -109,21 +241,16 @@ def parse_active_projects(input_path, parse_object):
 with open(settings_path, "r") as s_file:
     settings_yml = yaml.safe_load(s_file)
 
-export_client = settings_yml['export_client']
+# These lines contains all global configuration variables.
+export_client = refresh_only = update_bcc_version = cleanup_temp = create_release_notes = print_path_debug = update_publish_workflow = download_prev_release = bool
+bh_banner = repo_owner = repo_name = str
+server_mods_remove_list = list
+
+# Parse settings file and update variables.
+for key, value in settings_yml.items():
+    globals()[key] = value
+
 export_server = determine_server_export()
-
-refresh_only = settings_yml['refresh_only']
-update_bcc_version = settings_yml['update_bcc_version']
-cleanup_temp = settings_yml['cleanup_temp']
-create_release_notes = settings_yml['create_release_notes']
-server_mods_remove_list = settings_yml['server_mods_remove_list']
-print_path_debug = settings_yml['print_path_debug']
-update_publish_workflow = settings_yml['update_publish_workflow']
-bh_banner = settings_yml['bh_banner']
-repo_owner = settings_yml['repo_owner']
-repo_name = settings_yml['repo_name']
-download_prev_release = settings_yml['download_prev_release']
-
 
 if print_path_debug:
     print("[DEBUG] " + git_path)
@@ -136,21 +263,13 @@ if print_path_debug:
 ############################################################
 # Class Objects
 
-downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch="2.1.7")
+downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch=get_latest_release_version(repo_owner, repo_name))
 
 
 ############################################################
 # Main Program
 
 def main():
-    os.chdir(packwiz_path)
-    
-    # Parse pack.toml for modpack version.
-    with open(packwiz_manifest, "r") as f:
-        pack_toml = toml.load(f)
-    pack_version = pack_toml["version"]
-    modpack_name = pack_toml["name"]
-    minecraft_version = pack_toml["versions"]["minecraft"]
 
     if not refresh_only:
 
@@ -158,12 +277,28 @@ def main():
         # Download previous release files.
         #----------------------------------------
         if download_prev_release:
+            if os.path.exists(prev_release):
+                rmtree(prev_release)
+                os.makedirs(prev_release)
+            else:
+                os.makedirs(prev_release)
+                
             async def download_mod_files():
                 # Download all files from a folder asynchronously
                 await downloader.download_folder('Packwiz/mods', prev_release)
 
             # Run the main function
             asyncio.run(download_mod_files())
+
+        #----------------------------------------
+        # Compare previous release.
+        #----------------------------------------
+
+        # print(parse_active_projects(packwiz_mods_path, "filename"))
+        # print(parse_active_projects(packwiz_mods_path, "filename"))
+        differences = compare_toml_files(prev_release, packwiz_mods_path)
+        print(write_differences_to_markdown(differences, 'differences_report.md'))
+
 
         #----------------------------------------
         # Update publish workflow values.
