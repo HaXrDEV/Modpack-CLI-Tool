@@ -6,7 +6,7 @@ input("""
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 Press Enter to continue...""")
 
-import os
+import os, sys
 import os.path
 import json
 import subprocess
@@ -19,6 +19,10 @@ from ruamel.yaml import YAML
 from mdutils.mdutils import MdUtils
 from mdutils import Html
 import re
+
+# GitHub Download
+from GitHubDownloader import AsyncGitHubDownloader
+import asyncio
 
 ############################################################
 # Variables
@@ -40,6 +44,7 @@ tempfolder_path = export_path + "temp\\"
 temp_mods_path = tempfolder_path + "mods\\"
 settings_path = git_path + "\\settings.yml"
 packwiz_mods_path = packwiz_path + "mods\\"
+prev_release = git_path + "\\Modpack-CLI-Tool\\prev_release"
 
 ############################################################
 # Functions
@@ -73,7 +78,7 @@ def remove_bracketed_text(input_str):
     # Return the cleaned string
     return result.strip()
 
-def parse_active_projects(input_path):
+def parse_active_projects(input_path, parse_object):
     """This method takes a path as input and parses the pw.toml files inside, returning the names of activate projects in a list."""
     active_project = []
     for mod_toml in os.listdir(input_path):
@@ -84,7 +89,7 @@ def parse_active_projects(input_path):
                     mod_toml = toml.load(f)
                     side = str(mod_toml['side'])
                     if side in ("both", "client", "server"):
-                        mod_name = remove_bracketed_text(mod_toml['name'])
+                        mod_name = remove_bracketed_text(mod_toml[parse_object])
                         
                         if side == "both":
                             active_project.append(mod_name)
@@ -94,7 +99,9 @@ def parse_active_projects(input_path):
             print(ex, mod_toml)
     return active_project
 
-print(markdown_list_maker(parse_active_projects(packwiz_mods_path)))
+#print(markdown_list_maker(parse_active_projects(packwiz_mods_path, "name")))
+# print(markdown_list_maker(parse_active_projects(packwiz_mods_path, "filename")))
+
 
 ############################################################
 # Configuration
@@ -113,6 +120,10 @@ server_mods_remove_list = settings_yml['server_mods_remove_list']
 print_path_debug = settings_yml['print_path_debug']
 update_publish_workflow = settings_yml['update_publish_workflow']
 bh_banner = settings_yml['bh_banner']
+repo_owner = settings_yml['repo_owner']
+repo_name = settings_yml['repo_name']
+download_prev_release = settings_yml['download_prev_release']
+
 
 if print_path_debug:
     print("[DEBUG] " + git_path)
@@ -120,6 +131,12 @@ if print_path_debug:
     print("[DEBUG] " + packwiz_exe_path)
     print("[DEBUG] " + bcc_client_config_path)
     print("[DEBUG] " + bcc_server_config_path)
+
+
+############################################################
+# Class Objects
+
+downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch="2.1.7")
 
 
 ############################################################
@@ -136,7 +153,18 @@ def main():
     minecraft_version = pack_toml["versions"]["minecraft"]
 
     if not refresh_only:
-        
+
+        #----------------------------------------
+        # Download previous release files.
+        #----------------------------------------
+        if download_prev_release:
+            async def download_mod_files():
+                # Download all files from a folder asynchronously
+                await downloader.download_folder('Packwiz/mods', prev_release)
+
+            # Run the main function
+            asyncio.run(download_mod_files())
+
         #----------------------------------------
         # Update publish workflow values.
         #----------------------------------------
