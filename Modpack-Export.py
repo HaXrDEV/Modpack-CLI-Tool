@@ -289,9 +289,14 @@ def main():
             async def download_mod_files():
                 # Download all files from a folder asynchronously
                 await downloader.download_folder('Packwiz/mods', prev_release)
+                return
 
             # Run the main function
-            asyncio.run(download_mod_files())
+            try:
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+                asyncio.run(download_mod_files())
+            except Exception as ex:
+                print(ex)
 
         #----------------------------------------
         # Compare previous release.
