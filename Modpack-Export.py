@@ -79,16 +79,17 @@ def parse_active_projects(input_path):
     for mod_toml in os.listdir(input_path):
         mod_toml_path = input_path + mod_toml
         try:
-            with open(mod_toml_path, "r", encoding="utf8") as f:
-                mod_toml = toml.load(f)
-                side = str(mod_toml['side'])
-                if side in ("both", "client", "server"):
-                    mod_name = remove_bracketed_text(mod_toml['name'])
-                    
-                    if side == "both":
-                        active_project.append(mod_name)
-                    else:
-                        active_project.append(f"{mod_name} [{side.capitalize()}]")
+            if os.path.isfile(mod_toml_path): # Checks if mod_toml_path is a file.
+                with open(mod_toml_path, "r", encoding="utf8") as f:
+                    mod_toml = toml.load(f)
+                    side = str(mod_toml['side'])
+                    if side in ("both", "client", "server"):
+                        mod_name = remove_bracketed_text(mod_toml['name'])
+                        
+                        if side == "both":
+                            active_project.append(mod_name)
+                        else:
+                            active_project.append(f"{mod_name} [{side.capitalize()}]")
         except Exception as ex:
             print(ex, mod_toml)
     return active_project
