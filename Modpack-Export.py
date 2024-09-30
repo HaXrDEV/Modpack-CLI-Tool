@@ -24,6 +24,9 @@ import requests
 from GitHubDownloader import AsyncGitHubDownloader
 import asyncio
 
+# Changelog stuff
+from ChangelogFactory import ChangelogFactory
+
 ############################################################
 # Variables
 
@@ -45,6 +48,7 @@ temp_mods_path = tempfolder_path + "mods\\"
 settings_path = git_path + "\\settings.yml"
 packwiz_mods_path = packwiz_path + "mods\\"
 prev_release = git_path + "\\Modpack-CLI-Tool\\prev_release"
+changelog_dir_path = git_path + "\\Changelogs\\"
 
 
 ############################################################
@@ -217,6 +221,54 @@ def write_differences_to_markdown(differences, input_modpack_name, version1, ver
     
     return markdown_output
 
+
+def check_github_release_exists(owner, repo, version):
+    """
+    Check if a specific release version exists on a GitHub repository.
+    
+    Args:
+    - owner (str): GitHub owner or organization name
+    - repo (str): GitHub repository name
+    - version (str): Release version tag to check
+    
+    Returns:
+    - bool: True if the release version exists, False otherwise
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{version}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        return True  # Release version exists
+    elif response.status_code == 404:
+        return False  # Release version does not exist
+    else:
+        response.raise_for_status()  # Raise an error for other HTTP statuses
+
+
+def check_github_tag_exists(owner, repo, tag):
+    """
+    Check if a specific tag exists in a GitHub repository.
+    
+    Args:
+    - owner (str): GitHub owner or organization name
+    - repo (str): GitHub repository name
+    - tag (str): Tag to check
+    
+    Returns:
+    - bool: True if the tag exists, False otherwise
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}/tags"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        tags = response.json()
+        # Check if the tag exists in the list of tags
+        return any(t['name'] == tag for t in tags)
+    else:
+        response.raise_for_status()  # Raise an error for other HTTP statuses
+
+
+
 ############################################################
 # Start Message
 
@@ -267,7 +319,7 @@ if print_path_debug:
 # Class Objects
 
 downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch=prev_release_version)
-
+changelog = ChangelogFactory(changelog_dir_path, modpack_name, pack_version)
 
 ############################################################
 # Main Program
@@ -275,6 +327,43 @@ downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch=prev_release_ve
 def main():
 
     if not refresh_only:
+
+        #----------------------------------------
+        # Generate CHANGELOG.md file.
+        #----------------------------------------
+
+        tempgit_path = git_path + "\\Modpack-CLI-Tool\\tempgit\\"
+        
+        async def download_compare_files(input_version):
+            local_downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch=input_version)
+
+            await local_downloader.download_folder('Packwiz/mods', tempgit_path + input_version)
+            return
+        
+        def make_and_delete_dir(dir):
+            if os.path.exists(dir):
+                rmtree(dir)
+                os.makedirs(dir)
+            else:
+                os.makedirs(dir)
+
+        for changelog_yml in reversed(os.listdir(changelog_dir_path)):
+            if changelog_yml.endswith(('.yml', '.yaml')):  # Filter only YAML files
+                version = changelog.get_changelog_value(changelog_yml, "version")
+
+                if version != pack_version:
+                    make_and_delete_dir(tempgit_path + version)
+
+                    try:
+                        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+                        asyncio.run(download_compare_files(version))
+                    except Exception as ex:
+                        print(ex)
+
+
+        
+        changelog.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods_path)
+
 
         #----------------------------------------
         # Download previous release files.
@@ -349,10 +438,6 @@ def main():
             md_element_crism_spacer = "![CrismPack Spacer](https://github.com/CrismPack/CDN/blob/main/desc/breakneck/79ESzz1-tiny.png?raw=true)"
             # html_element_bh_banner = "<p><a href='https://bisecthosting.com/CRISM'><img src='https://github.com/CrismPack/CDN/blob/main/desc/insomnia/bhbanner.png?raw=true' width='800' /></a></p>"
 
-            with open(changelog_path, "r", encoding="utf8") as f:
-                changelog_yml = yaml.safe_load(f)
-            update_overview = changelog_yml['Update overview']
-            #update_overview = update_overview.replace("-","### -")
 
             mdFile_CF = MdUtils(file_name='CurseForge-Release')
             
@@ -360,7 +445,23 @@ def main():
                 print("pack_version = " + pack_version)
                 mdFile_CF.new_paragraph(md_element_pre_release)
 
-            mdFile_CF.new_paragraph(markdown_list_maker(update_overview))
+
+            with open(changelog_path, "r", encoding="utf8") as f:
+                changelog_yml = yaml.safe_load(f)
+            try:
+                update_overview = changelog_yml['Update overview']
+                mdFile_CF.new_paragraph(markdown_list_maker(update_overview))
+            #update_overview = update_overview.replace("-","### -")
+            except:
+                improvements = changelog_yml['Changes/Improvements']
+                bug_fixes = changelog_yml['Bug Fixes']
+                if improvements:
+                    mdFile_CF.new_paragraph("### Changes/Improvements ⭐")
+                    mdFile_CF.new_paragraph(markdown_list_maker(improvements))
+                if bug_fixes:
+                    mdFile_CF.new_paragraph("### Bug Fixes 🪲")
+                    mdFile_CF.new_paragraph(markdown_list_maker(bug_fixes))
+
             mdFile_CF.new_paragraph(md_element_full_changelog)
             mdFile_CF.new_paragraph("<br>")
             mdFile_CF.new_paragraph(md_element_bh_banner)

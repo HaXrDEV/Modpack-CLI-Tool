@@ -4,3 +4,4 @@ mmc-export
 mdutils
 MdUtils
 PyYAML
+requests-oauthlib
