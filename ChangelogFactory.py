@@ -3,6 +3,7 @@ import yaml
 from mdutils.mdutils import MdUtils
 import re
 import toml
+import itertools
 
 class ChangelogFactory:
     def __init__(self, changelog_dir, modpack_name, modpack_version):
@@ -37,10 +38,13 @@ class ChangelogFactory:
         toml_data_2 = {}
         
         # Load TOML files from the first directory
-        for filename in os.listdir(dir1):
-            if filename.endswith('.toml'):
-                filepath = os.path.join(dir1, filename)
-                toml_data_1[filename] = toml.load(filepath)
+        try:
+            for filename in os.listdir(dir1):
+                if filename.endswith('.toml'):
+                    filepath = os.path.join(dir1, filename)
+                    toml_data_1[filename] = toml.load(filepath)
+        except Exception as ex:
+            print(ex)
 
         # Load TOML files from the second directory
         for filename in os.listdir(dir2):
@@ -74,39 +78,52 @@ class ChangelogFactory:
         return results
 
 
+    def Reverse(self, lst):
+        new_lst = lst[::-1]
+        return new_lst
+
     def build_markdown_changelog(self, repo_owner, repo_name, tempgit_path, packwiz_mods_path):
         mdFile = MdUtils(file_name='CHANGELOG-test')
 
-        changelog_list = iter(reversed(os.listdir(self.changelog_dir)))
+        changelog_list = self.Reverse(os.listdir(self.changelog_dir))
+        #changelog_list_reversed = self.Reverse(changelog_list)
+        #changelog_iter1, changelog_iter2 = itertools.tee(changelog_list)
 
-        for changelog in changelog_list:
+        # Iterate over the list with an index using enumerate
+        for i, changelog in enumerate(changelog_list):
+            # Check if there's a "next" item
+            if i + 1 < len(changelog_list):
+                next_changelog = changelog_list[i + 1]
+            else:
+                next_changelog = None  # No next item if we're at the last one
+
             if changelog.endswith(('.yml', '.yaml')):  # Filter only YAML files
                 version = self.get_changelog_value(changelog, "version")
-                next_changelog = next(changelog_list)
-                prev_release = self.get_changelog_value(next_changelog, "version")
+                next_version = self.get_changelog_value(next_changelog , "version")
 
-                try:
-                    fabric_loader = self.get_changelog_value(changelog, "Fabric version")
-                    improvements = self.get_changelog_value(changelog, "Changes/Improvements")
-                    overview_legacy = self.get_changelog_value(changelog, "Update overview")
-                    bug_fixes = self.get_changelog_value(changelog, "Bug Fixes")
-                except:
-                    continue
-                
-                #tempgit_path = r"D:\GitHub Projects\Insomnia-Hardcore\Modpack-CLI-Tool\tempgit"
-                prev_release_path = os.path.join(tempgit_path, str(prev_release))
+                fabric_loader = self.get_changelog_value(changelog, "Fabric version")
+                improvements = self.get_changelog_value(changelog, "Changes/Improvements")
+                overview_legacy = self.get_changelog_value(changelog, "Update overview")
+                bug_fixes = self.get_changelog_value(changelog, "Bug Fixes")
+
+                next_version_path = os.path.join(tempgit_path, str(next_version))
                 version_path = os.path.join(tempgit_path, str(version))
 
-                #differences = self.compare_toml_files(prev_release_path, version_path)
-                if str(version) != str(modpack_version):
-                    differences = self.compare_toml_files(prev_release_path, version_path)
+                print(f"[DEBUG] {next_version_path} + {version_path}")
+
+                if str(version) != str(self.modpack_version):
+                    differences = self.compare_toml_files(next_version_path, version_path)
                 else:
-                    differences = self.compare_toml_files(prev_release_path, packwiz_mods_path)
+                    differences = self.compare_toml_files(next_version_path, packwiz_mods_path)
                 
                 added_mods = differences['added']
                 removed_mods = differences['removed']
+                
+                if not "v" in version:
+                    mdFile.new_paragraph(f"## {self.modpack_name} | v{version}")
+                else:
+                    mdFile.new_paragraph(f"## {self.modpack_name} | {version}")
 
-                mdFile.new_paragraph(f"## {self.modpack_name} | v{version}")
                 mdFile.new_paragraph(f"*Fabric Loader {fabric_loader}* | *[Mod Updates](https://github.com/{repo_owner}/{repo_name}/blob/main/changelogs/changelog_mods_{version}.md)*")
                 if improvements:
                     mdFile.new_paragraph("### Changes/Improvements ⭐")
@@ -133,14 +150,14 @@ changelog_dir = r"D:\GitHub Projects\Insomnia-Hardcore\Changelogs"
 
 repo_owner = "CrismPack"
 repo_name = "Insomnia-Hardcore"
-modpack_version = "2.2.0"
+modpack_version_ = "2.2.0"
 
 # Create an instance of ChangelogFactory and print the changelog names
-changelog = ChangelogFactory(changelog_dir, "Insomnia: Hardcore", modpack_version)
+changelogfactory = ChangelogFactory(changelog_dir, "Insomnia: Hardcore", modpack_version_)
 #print(changelog.get_changelog_value("name"))
 
 #print(changelog.markdown_list_maker(changelog.get_changelog_value()))
 
 tempgit_path = r"D:\GitHub Projects\Insomnia-Hardcore\Modpack-CLI-Tool\tempgit"
 packwiz_mods = r"D:\GitHub Projects\Insomnia-Hardcore\Packwiz\mods"
-changelog.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods)
+changelogfactory.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods)
