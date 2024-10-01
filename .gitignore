@@ -1,5 +1,7 @@
 .github
 packwiz
+prev_release
+tempgit
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
