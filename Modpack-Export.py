@@ -133,7 +133,7 @@ def write_differences_to_markdown(differences, input_modpack_name, version1, ver
     if differences['added']:
         markdown_lines.append("## Added\n")
         for name in differences['added']:
-            markdown_lines.append(f"- {name}")
+            markdown_lines.append(f"- {markdown.remove_bracketed_text(name)}")
     else:
         markdown_lines.append("## Added\n- None")
     
@@ -141,7 +141,7 @@ def write_differences_to_markdown(differences, input_modpack_name, version1, ver
     if differences['removed']:
         markdown_lines.append("## Removed\n")
         for name in differences['removed']:
-            markdown_lines.append(f"- {name}")
+            markdown_lines.append(f"- {markdown.remove_bracketed_text(name)}")
     else:
         markdown_lines.append("## Removed\n- None")
     
@@ -149,7 +149,7 @@ def write_differences_to_markdown(differences, input_modpack_name, version1, ver
     if differences['modified']:
         markdown_lines.append("## Modified\n")
         for name, old_version, new_version in differences['modified']:
-            markdown_lines.append(f"- **{name}**: Changed from `{old_version}` to `{new_version}`")
+            markdown_lines.append(f"- **{markdown.remove_bracketed_text(name)}**: Changed from `{old_version}` to `{new_version}`")
     else:
         markdown_lines.append("## Modified\n- None")
     
@@ -342,7 +342,7 @@ def main():
         # print(parse_active_projects(packwiz_mods_path, "filename"))
         # print(parse_active_projects(packwiz_mods_path, "filename"))
         differences = changelog.compare_toml_files(prev_release, packwiz_mods_path)
-        print(write_differences_to_markdown(differences, modpack_name, prev_release_version, pack_version, git_path + f'\\Changelogs\\changelog_mods_{pack_version}.md'))
+        print(markdown.remove_bracketed_text(write_differences_to_markdown(differences, modpack_name, prev_release_version, pack_version, git_path + f'\\Changelogs\\changelog_mods_{pack_version}.md')))
 
 
         #----------------------------------------
