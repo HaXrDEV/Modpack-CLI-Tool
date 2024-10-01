@@ -97,6 +97,10 @@ class ChangelogFactory:
             else:
                 next_changelog = None  # No next item if we're at the last one
 
+
+            added_mods = None
+            removed_mods = None
+
             if changelog.endswith(('.yml', '.yaml')):  # Filter only YAML files
                 version = self.get_changelog_value(changelog, "version")
                 next_version = self.get_changelog_value(next_changelog , "version")
@@ -111,13 +115,16 @@ class ChangelogFactory:
 
                 print(f"[DEBUG] {next_version_path} + {version_path}")
 
-                if str(version) != str(self.modpack_version):
+                if str(version) != str(self.modpack_version) and next_version:
                     differences = self.compare_toml_files(next_version_path, version_path)
-                else:
+                elif str(version) == str(self.modpack_version) and next_version:
                     differences = self.compare_toml_files(next_version_path, packwiz_mods_path)
-                
-                added_mods = differences['added']
-                removed_mods = differences['removed']
+                else:
+                    differences = None
+
+                if differences:
+                    added_mods = differences['added']
+                    removed_mods = differences['removed']
                 
                 if not "v" in version:
                     mdFile.new_paragraph(f"## {self.modpack_name} | v{version}")
