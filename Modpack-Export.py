@@ -27,6 +27,9 @@ import asyncio
 # Changelog stuff
 from ChangelogFactory import ChangelogFactory
 
+# Markdown Stuff
+import MarkdownHelper as markdown
+
 ############################################################
 # Variables
 
@@ -65,23 +68,6 @@ def determine_server_export():
     else:
         return False
 
-def markdown_list_maker(lines):
-    """This method takes a yml object of strings, formats them and returns the result."""
-    processed_lines = []
-    for line in lines:
-        processed_lines.append("- " + line)
-    return """{}""".format("\n".join(processed_lines[0:]))
-
-def remove_bracketed_text(input_str):
-    """This method takes an input string and removes any text surrounded by parentheses (), square brackets [], and curly braces {}."""
-    # Define a pattern to match text within parentheses (), square brackets [], and curly braces {}
-    pattern = r'\(.*?\)|\[.*?\]|\{.*?\}'
-    
-    # Use re.sub() to replace the matched text with an empty string
-    result = re.sub(pattern, '', input_str)
-    
-    # Return the cleaned string
-    return result.strip()
 
 def parse_active_projects(input_path, parse_object):
     """This method takes a path as input and parses the pw.toml files inside, returning the names of activate projects in a list."""
@@ -94,7 +80,7 @@ def parse_active_projects(input_path, parse_object):
                     mod_toml = toml.load(f)
                     side = str(mod_toml['side'])
                     if side in ("both", "client", "server"):
-                        mod_name = remove_bracketed_text(mod_toml[parse_object])
+                        mod_name = markdown.remove_bracketed_text(mod_toml[parse_object])
                         
                         if side == "both":
                             active_project.append(mod_name)
@@ -104,8 +90,8 @@ def parse_active_projects(input_path, parse_object):
             print(ex, mod_toml)
     return active_project
 
-#print(markdown_list_maker(parse_active_projects(packwiz_mods_path, "name")))
-# print(markdown_list_maker(parse_active_projects(packwiz_mods_path, "filename")))
+#print(markdown.markdown_list_maker(parse_active_projects(packwiz_mods_path, "name")))
+# print(markdown.markdown_list_maker(parse_active_projects(packwiz_mods_path, "filename")))
 
 def get_latest_release_version(owner, repo):
     """
@@ -134,50 +120,6 @@ def get_latest_release_version(owner, repo):
         return f"HTTP error occurred: {http_err}"
     except Exception as err:
         return f"Error occurred: {err}"
-
-
-
-def compare_toml_files(dir1, dir2):
-    # Initialize dictionaries to store TOML data
-    toml_data_1 = {}
-    toml_data_2 = {}
-    
-    # Load TOML files from the first directory
-    for filename in os.listdir(dir1):
-        if filename.endswith('.toml'):
-            filepath = os.path.join(dir1, filename)
-            toml_data_1[filename] = toml.load(filepath)
-
-    # Load TOML files from the second directory
-    for filename in os.listdir(dir2):
-        if filename.endswith('.toml'):
-            filepath = os.path.join(dir2, filename)
-            toml_data_2[filename] = toml.load(filepath)
-
-    # Prepare to store results
-    results = {
-        'added': [],
-        'removed': [],
-        'modified': []
-    }
-
-    # Check for added and modified files
-    for filename, data in toml_data_2.items():
-        if filename not in toml_data_1:
-            results['added'].append(data.get('name', filename))
-        else:
-            # Compare "version" fields
-            version1 = toml_data_1[filename].get('filename', None)
-            version2 = data.get('filename', None)
-            if version1 != version2:
-                results['modified'].append((data.get('name', filename), version1, version2))
-
-    # Check for removed files
-    for filename in toml_data_1.keys():
-        if filename not in toml_data_2:
-            results['removed'].append(toml_data_1[filename].get('name', filename))
-
-    return results
 
 
 
@@ -222,50 +164,50 @@ def write_differences_to_markdown(differences, input_modpack_name, version1, ver
     return markdown_output
 
 
-def check_github_release_exists(owner, repo, version):
-    """
-    Check if a specific release version exists on a GitHub repository.
+# def check_github_release_exists(owner, repo, version):
+#     """
+#     Check if a specific release version exists on a GitHub repository.
     
-    Args:
-    - owner (str): GitHub owner or organization name
-    - repo (str): GitHub repository name
-    - version (str): Release version tag to check
+#     Args:
+#     - owner (str): GitHub owner or organization name
+#     - repo (str): GitHub repository name
+#     - version (str): Release version tag to check
     
-    Returns:
-    - bool: True if the release version exists, False otherwise
-    """
-    url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{version}"
-    response = requests.get(url)
+#     Returns:
+#     - bool: True if the release version exists, False otherwise
+#     """
+#     url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{version}"
+#     response = requests.get(url)
     
-    if response.status_code == 200:
-        return True  # Release version exists
-    elif response.status_code == 404:
-        return False  # Release version does not exist
-    else:
-        response.raise_for_status()  # Raise an error for other HTTP statuses
+#     if response.status_code == 200:
+#         return True  # Release version exists
+#     elif response.status_code == 404:
+#         return False  # Release version does not exist
+#     else:
+#         response.raise_for_status()  # Raise an error for other HTTP statuses
 
 
-def check_github_tag_exists(owner, repo, tag):
-    """
-    Check if a specific tag exists in a GitHub repository.
+# def check_github_tag_exists(owner, repo, tag):
+#     """
+#     Check if a specific tag exists in a GitHub repository.
     
-    Args:
-    - owner (str): GitHub owner or organization name
-    - repo (str): GitHub repository name
-    - tag (str): Tag to check
+#     Args:
+#     - owner (str): GitHub owner or organization name
+#     - repo (str): GitHub repository name
+#     - tag (str): Tag to check
     
-    Returns:
-    - bool: True if the tag exists, False otherwise
-    """
-    url = f"https://api.github.com/repos/{owner}/{repo}/tags"
-    response = requests.get(url)
+#     Returns:
+#     - bool: True if the tag exists, False otherwise
+#     """
+#     url = f"https://api.github.com/repos/{owner}/{repo}/tags"
+#     response = requests.get(url)
     
-    if response.status_code == 200:
-        tags = response.json()
-        # Check if the tag exists in the list of tags
-        return any(t['name'] == tag for t in tags)
-    else:
-        response.raise_for_status()  # Raise an error for other HTTP statuses
+#     if response.status_code == 200:
+#         tags = response.json()
+#         # Check if the tag exists in the list of tags
+#         return any(t['name'] == tag for t in tags)
+#     else:
+#         response.raise_for_status()  # Raise an error for other HTTP statuses
 
 
 
@@ -331,7 +273,8 @@ def main():
         #----------------------------------------
         # Generate CHANGELOG.md file.
         #----------------------------------------
-
+        os.chdir(git_path)
+        
         tempgit_path = git_path + "\\Modpack-CLI-Tool\\tempgit\\"
         
         async def download_compare_files(input_version):
@@ -340,19 +283,24 @@ def main():
             await local_downloader.download_folder('Packwiz/mods', tempgit_path + input_version)
             return
         
-        def make_and_delete_dir(dir):
-            if os.path.exists(dir):
-                rmtree(dir)
-                os.makedirs(dir)
-            else:
+        # def make_and_delete_dir(dir):
+        #     if os.path.exists(dir):
+        #         rmtree(dir)
+        #         os.makedirs(dir)
+        #     else:
+        #         os.makedirs(dir)
+        def check_and_make_dir(dir):
+            if not os.path.exists(dir):
                 os.makedirs(dir)
 
         for changelog_yml in reversed(os.listdir(changelog_dir_path)):
             if changelog_yml.endswith(('.yml', '.yaml')):  # Filter only YAML files
                 version = changelog.get_changelog_value(changelog_yml, "version")
+                version_path = tempgit_path + version
 
-                if version != pack_version:
-                    make_and_delete_dir(tempgit_path + version)
+                if version != pack_version and not os.path.exists(version_path):
+                    #check_and_make_dir(version_path)
+                    os.makedirs(version_path)
 
                     try:
                         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -393,7 +341,7 @@ def main():
 
         # print(parse_active_projects(packwiz_mods_path, "filename"))
         # print(parse_active_projects(packwiz_mods_path, "filename"))
-        differences = compare_toml_files(prev_release, packwiz_mods_path)
+        differences = changelog.compare_toml_files(prev_release, packwiz_mods_path)
         print(write_differences_to_markdown(differences, modpack_name, prev_release_version, pack_version, git_path + f'\\Changelogs\\changelog_mods_{pack_version}.md'))
 
 
@@ -450,17 +398,17 @@ def main():
                 changelog_yml = yaml.safe_load(f)
             try:
                 update_overview = changelog_yml['Update overview']
-                mdFile_CF.new_paragraph(markdown_list_maker(update_overview))
+                mdFile_CF.new_paragraph(markdown.markdown_list_maker(update_overview))
             #update_overview = update_overview.replace("-","### -")
             except:
                 improvements = changelog_yml['Changes/Improvements']
                 bug_fixes = changelog_yml['Bug Fixes']
                 if improvements:
                     mdFile_CF.new_paragraph("### Changes/Improvements ⭐")
-                    mdFile_CF.new_paragraph(markdown_list_maker(improvements))
+                    mdFile_CF.new_paragraph(markdown.markdown_list_maker(improvements))
                 if bug_fixes:
                     mdFile_CF.new_paragraph("### Bug Fixes 🪲")
-                    mdFile_CF.new_paragraph(markdown_list_maker(bug_fixes))
+                    mdFile_CF.new_paragraph(markdown.markdown_list_maker(bug_fixes))
 
             mdFile_CF.new_paragraph(md_element_full_changelog)
             mdFile_CF.new_paragraph("<br>")

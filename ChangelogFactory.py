@@ -4,15 +4,16 @@ from mdutils.mdutils import MdUtils
 import re
 import toml
 import itertools
+import MarkdownHelper as markdown
 
 class ChangelogFactory:
     def __init__(self, changelog_dir, modpack_name, modpack_version):
         self.changelog_dir = changelog_dir
         self.modpack_name = modpack_name
         self.modpack_version = modpack_version
-
+    
     def get_changelog_value(self, changelog_yml, key):
-        if changelog_yml.endswith(('.yml', '.yaml')):  # Filter only YAML files
+        if changelog_yml.endswith(('.yml', '.yaml')) and changelog_yml:  # Filter only YAML files
             file_path = os.path.join(self.changelog_dir, changelog_yml)
             try:
                 with open(file_path, "r", encoding="utf8") as f: # Open the YAML file and load its contents
@@ -24,13 +25,6 @@ class ChangelogFactory:
                 print(f"Key '{key}' not found in {file_path}") # Handle missing key
             finally:
                 f.close()
-
-    def markdown_list_maker(self, lines):
-        """This method takes a yml object of strings, formats them and returns the result."""
-        processed_lines = []
-        for line in lines:
-            processed_lines.append("- " + line)
-        return """{}""".format("\n".join(processed_lines[0:]))
 
     def compare_toml_files(self, dir1, dir2):
         # Initialize dictionaries to store TOML data
@@ -82,8 +76,8 @@ class ChangelogFactory:
         new_lst = lst[::-1]
         return new_lst
 
-    def build_markdown_changelog(self, repo_owner, repo_name, tempgit_path, packwiz_mods_path):
-        mdFile = MdUtils(file_name='CHANGELOG-test')
+    def build_markdown_changelog(self, repo_owner, repo_name, tempgit_path, packwiz_mods_path, file_name="CHANGELOG"):
+        mdFile = MdUtils(file_name)
 
         changelog_list = self.Reverse(os.listdir(self.changelog_dir))
         #changelog_list_reversed = self.Reverse(changelog_list)
@@ -103,7 +97,8 @@ class ChangelogFactory:
 
             if changelog.endswith(('.yml', '.yaml')):  # Filter only YAML files
                 version = self.get_changelog_value(changelog, "version")
-                next_version = self.get_changelog_value(next_changelog , "version")
+                if next_changelog:
+                    next_version = self.get_changelog_value(next_changelog , "version")
 
                 fabric_loader = self.get_changelog_value(changelog, "Fabric version")
                 improvements = self.get_changelog_value(changelog, "Changes/Improvements")
@@ -134,37 +129,37 @@ class ChangelogFactory:
                 mdFile.new_paragraph(f"*Fabric Loader {fabric_loader}* | *[Mod Updates](https://github.com/{repo_owner}/{repo_name}/blob/main/changelogs/changelog_mods_{version}.md)*")
                 if improvements:
                     mdFile.new_paragraph("### Changes/Improvements ⭐")
-                    mdFile.new_paragraph(self.markdown_list_maker(improvements))
+                    mdFile.new_paragraph(markdown.markdown_list_maker(improvements))
                 if overview_legacy:
                     mdFile.new_paragraph("### Update overview")
-                    mdFile.new_paragraph(self.markdown_list_maker(overview_legacy))
+                    mdFile.new_paragraph(markdown.markdown_list_maker(overview_legacy))
                 if bug_fixes:
                     mdFile.new_paragraph("### Bug Fixes 🪲")
-                    mdFile.new_paragraph(self.markdown_list_maker(bug_fixes))
+                    mdFile.new_paragraph(markdown.markdown_list_maker(bug_fixes))
                 if added_mods:
                     mdFile.new_paragraph("### Added Mods ✅")
-                    mdFile.new_paragraph(self.markdown_list_maker(added_mods))
+                    mdFile.new_paragraph(markdown.remove_bracketed_text(markdown.markdown_list_maker(added_mods)))
                 if removed_mods:
                     mdFile.new_paragraph("### Removed Mods ❌")
-                    mdFile.new_paragraph(self.markdown_list_maker(removed_mods))
+                    mdFile.new_paragraph(markdown.remove_bracketed_text(markdown.markdown_list_maker(removed_mods)))
                 mdFile.new_paragraph("---")
         mdFile.create_md_file()
 
 
-# Set the changelog directory
-changelog_dir = r"D:\GitHub Projects\Insomnia-Hardcore\Changelogs"
+# # Set the changelog directory
+# changelog_dir = r"D:\GitHub Projects\Insomnia-Hardcore\Changelogs"
 
 
-repo_owner = "CrismPack"
-repo_name = "Insomnia-Hardcore"
-modpack_version_ = "2.2.0"
+# repo_owner = "CrismPack"
+# repo_name = "Insomnia-Hardcore"
+# modpack_version_ = "2.2.0"
 
-# Create an instance of ChangelogFactory and print the changelog names
-changelogfactory = ChangelogFactory(changelog_dir, "Insomnia: Hardcore", modpack_version_)
-#print(changelog.get_changelog_value("name"))
+# # Create an instance of ChangelogFactory and print the changelog names
+# changelogfactory = ChangelogFactory(changelog_dir, "Insomnia: Hardcore", modpack_version_)
+# #print(changelog.get_changelog_value("name"))
 
-#print(changelog.markdown_list_maker(changelog.get_changelog_value()))
+# #print(changelog.markdown_list_maker(changelog.get_changelog_value()))
 
-tempgit_path = r"D:\GitHub Projects\Insomnia-Hardcore\Modpack-CLI-Tool\tempgit"
-packwiz_mods = r"D:\GitHub Projects\Insomnia-Hardcore\Packwiz\mods"
-changelogfactory.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods)
+# tempgit_path = r"D:\GitHub Projects\Insomnia-Hardcore\Modpack-CLI-Tool\tempgit"
+# packwiz_mods = r"D:\GitHub Projects\Insomnia-Hardcore\Packwiz\mods"
+# changelogfactory.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods)
