@@ -160,7 +160,7 @@ with open(settings_path, "r") as s_file:
 
 # These lines contains all global configuration variables.
 export_client = refresh_only = update_bcc_version = cleanup_temp = create_release_notes = print_path_debug = update_publish_workflow = download_comparison_files = generate_mods_changelog = generate_primary_changelog = bool
-bh_banner = repo_owner = repo_name = str
+bh_banner = repo_owner = repo_name = repo_main_branch = str
 server_mods_remove_list = list
 
 # Parse settings file and update variables.
@@ -220,7 +220,8 @@ def main():
         #----------------------------------------
 
         if generate_primary_changelog:
-            changelog_factory.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods_path)
+            os.chdir(git_path)
+            changelog_factory.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods_path, repo_branch = repo_main_branch)
 
 
         #----------------------------------------

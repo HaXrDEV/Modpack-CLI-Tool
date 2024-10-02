@@ -16,3 +16,4 @@ bh_banner: ""
 
 repo_owner: "CrismPack"
 repo_name: ""
+repo_main_branch: "main" # Defaults to "main" if None.
