@@ -126,7 +126,7 @@ class ChangelogFactory:
                 else:
                     mdFile.new_paragraph(f"## {self.modpack_name} | {version}")
 
-                mdFile.new_paragraph(f"*Fabric Loader {fabric_loader}* | *[Mod Updates](https://github.com/{repo_owner}/{repo_name}/blob/{repo_branch}/changelogs/changelog_mods_{version}.md)*")
+                mdFile.new_paragraph(f"*Fabric Loader {fabric_loader}* | *[Mod Updates](https://github.com/{repo_owner}/{repo_name}/blob/{repo_branch}/Changelogs/changelog_mods_{version}.md)*")
                 if improvements:
                     mdFile.new_paragraph("### Changes/Improvements ⭐")
                     mdFile.new_paragraph(markdown.markdown_list_maker(improvements))
