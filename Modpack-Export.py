@@ -90,6 +90,14 @@ def parse_active_projects(input_path, parse_object):
             print(ex, mod_toml)
     return active_project
 
+def make_and_delete_dir(dir):
+    """This function takes a directory path as a string and either clears its content if it already exists, or creates it if it doesn't."""
+    if os.path.exists(dir):
+        rmtree(dir)
+        os.makedirs(dir)
+    else:
+        os.makedirs(dir)
+
 #print(markdown.markdown_list_maker(parse_active_projects(packwiz_mods_path, "name")))
 # print(markdown.markdown_list_maker(parse_active_projects(packwiz_mods_path, "filename")))
 
@@ -120,94 +128,6 @@ def get_latest_release_version(owner, repo):
         return f"HTTP error occurred: {http_err}"
     except Exception as err:
         return f"Error occurred: {err}"
-
-
-
-def write_differences_to_markdown(differences, input_modpack_name, version1, version2, output_file=None, ):
-    markdown_lines = []
-    
-    # Title for the Markdown report
-    markdown_lines.append(f"# {input_modpack_name} {version1} -> {version2}\n")
-    
-    # Added section
-    if differences['added']:
-        markdown_lines.append("## Added\n")
-        for name in differences['added']:
-            markdown_lines.append(f"- {markdown.remove_bracketed_text(name)}")
-    else:
-        markdown_lines.append("## Added\n- None")
-    
-    # Removed section
-    if differences['removed']:
-        markdown_lines.append("## Removed\n")
-        for name in differences['removed']:
-            markdown_lines.append(f"- {markdown.remove_bracketed_text(name)}")
-    else:
-        markdown_lines.append("## Removed\n- None")
-    
-    # Modified section
-    if differences['modified']:
-        markdown_lines.append("## Modified\n")
-        for name, old_version, new_version in differences['modified']:
-            markdown_lines.append(f"- **{markdown.remove_bracketed_text(name)}**: Changed from `{old_version}` to `{new_version}`")
-    else:
-        markdown_lines.append("## Modified\n- None")
-    
-    # Join all lines into a single string
-    markdown_output = "\n".join(markdown_lines)
-    
-    # Write to a file if an output path is provided
-    if output_file:
-        with open(output_file, 'w', encoding="utf8") as f:
-            f.write(markdown_output)
-    
-    return markdown_output
-
-
-# def check_github_release_exists(owner, repo, version):
-#     """
-#     Check if a specific release version exists on a GitHub repository.
-    
-#     Args:
-#     - owner (str): GitHub owner or organization name
-#     - repo (str): GitHub repository name
-#     - version (str): Release version tag to check
-    
-#     Returns:
-#     - bool: True if the release version exists, False otherwise
-#     """
-#     url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{version}"
-#     response = requests.get(url)
-    
-#     if response.status_code == 200:
-#         return True  # Release version exists
-#     elif response.status_code == 404:
-#         return False  # Release version does not exist
-#     else:
-#         response.raise_for_status()  # Raise an error for other HTTP statuses
-
-
-# def check_github_tag_exists(owner, repo, tag):
-#     """
-#     Check if a specific tag exists in a GitHub repository.
-    
-#     Args:
-#     - owner (str): GitHub owner or organization name
-#     - repo (str): GitHub repository name
-#     - tag (str): Tag to check
-    
-#     Returns:
-#     - bool: True if the tag exists, False otherwise
-#     """
-#     url = f"https://api.github.com/repos/{owner}/{repo}/tags"
-#     response = requests.get(url)
-    
-#     if response.status_code == 200:
-#         tags = response.json()
-#         # Check if the tag exists in the list of tags
-#         return any(t['name'] == tag for t in tags)
-#     else:
-#         response.raise_for_status()  # Raise an error for other HTTP statuses
 
 
 
@@ -261,7 +181,7 @@ if print_path_debug:
 # Class Objects
 
 downloader = AsyncGitHubDownloader(repo_owner, repo_name, branch=prev_release_version)
-changelog = ChangelogFactory(changelog_dir_path, modpack_name, pack_version)
+changelog_factory = ChangelogFactory(changelog_dir_path, modpack_name, pack_version)
 
 ############################################################
 # Main Program
@@ -282,20 +202,10 @@ def main():
 
             await local_downloader.download_folder('Packwiz/mods', tempgit_path + input_version)
             return
-        
-        # def make_and_delete_dir(dir):
-        #     if os.path.exists(dir):
-        #         rmtree(dir)
-        #         os.makedirs(dir)
-        #     else:
-        #         os.makedirs(dir)
-        def check_and_make_dir(dir):
-            if not os.path.exists(dir):
-                os.makedirs(dir)
 
         for changelog_yml in reversed(os.listdir(changelog_dir_path)):
             if changelog_yml.endswith(('.yml', '.yaml')):  # Filter only YAML files
-                version = changelog.get_changelog_value(changelog_yml, "version")
+                version = changelog_factory.get_changelog_value(changelog_yml, "version")
                 version_path = tempgit_path + version
 
                 if version != pack_version and not os.path.exists(version_path):
@@ -310,7 +220,7 @@ def main():
 
 
         
-        changelog.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods_path)
+        changelog_factory.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods_path)
 
 
         #----------------------------------------
@@ -323,15 +233,15 @@ def main():
             else:
                 os.makedirs(prev_release)
                 
-            async def download_mod_files():
+            async def download_metadata_files():
                 # Download all files from a folder asynchronously
                 await downloader.download_folder('Packwiz/mods', prev_release)
                 return
 
-            # Run the main function
+            # Run the async function
             try:
                 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-                asyncio.run(download_mod_files())
+                asyncio.run(download_metadata_files())
             except Exception as ex:
                 print(ex)
 
@@ -339,11 +249,33 @@ def main():
         # Compare previous release.
         #----------------------------------------
 
-        # print(parse_active_projects(packwiz_mods_path, "filename"))
-        # print(parse_active_projects(packwiz_mods_path, "filename"))
-        differences = changelog.compare_toml_files(prev_release, packwiz_mods_path)
-        print(markdown.remove_bracketed_text(write_differences_to_markdown(differences, modpack_name, prev_release_version, pack_version, git_path + f'\\Changelogs\\changelog_mods_{pack_version}.md')))
+        changelog_list = changelog_factory.Reverse(os.listdir(changelog_dir_path))
 
+        # Iterate over the list with an index using enumerate
+        for i, changelog in enumerate(changelog_list):
+            # Check if there's a "next" item
+            if i + 1 < len(changelog_list):
+                next_changelog = changelog_list[i + 1]
+            else:
+                next_changelog = None  # No next item if we're at the last one
+            
+            if changelog.endswith(('.yml', '.yaml')):  # Filter only YAML files
+                current_version = changelog_factory.get_changelog_value(changelog, 'version')
+                if next_changelog:
+                    next_version = changelog_factory.get_changelog_value(next_changelog, 'version')
+
+                next_version_path = os.path.join(tempgit_path, str(next_version))
+                current_version_path = os.path.join(tempgit_path, str(current_version))
+
+                if str(current_version) != str(pack_version) and next_version:
+                    differences = changelog_factory.compare_toml_files(next_version_path, current_version_path)
+                elif str(current_version) == str(pack_version) and next_version:
+                    differences = changelog_factory.compare_toml_files(next_version_path, packwiz_mods_path)
+                else:
+                    differences = None
+
+                if next_version != current_version:
+                    markdown.write_differences_to_markdown(differences, modpack_name, next_version, current_version, git_path + f'\\Changelogs\\changelog_mods_{current_version}.md')
 
         #----------------------------------------
         # Update publish workflow values.
