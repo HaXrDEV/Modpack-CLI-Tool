@@ -76,7 +76,7 @@ class ChangelogFactory:
         new_lst = lst[::-1]
         return new_lst
 
-    def build_markdown_changelog(self, repo_owner, repo_name, tempgit_path, packwiz_mods_path, file_name="CHANGELOG", repo_branch = "main"):
+    def build_markdown_changelog(self, repo_owner, repo_name, tempgit_path, packwiz_mods_path, file_name="CHANGELOG", repo_branch = "main", mc_version=None):
         mdFile = MdUtils(file_name)
 
         changelog_list = self.Reverse(os.listdir(self.changelog_dir))
@@ -84,6 +84,13 @@ class ChangelogFactory:
         #changelog_iter1, changelog_iter2 = itertools.tee(changelog_list)
 
         # Iterate over the list with an index using enumerate
+        mdFile.new_paragraph(f"##### {self.modpack_name}")
+
+        if mc_version:
+            mdFile.new_paragraph(f"# Changelog - {mc_version}")
+        else:
+            mdFile.new_paragraph(f"# Changelog")
+
         for i, changelog in enumerate(changelog_list):
             # Check if there's a "next" item
             if i + 1 < len(changelog_list):
@@ -121,10 +128,15 @@ class ChangelogFactory:
                     added_mods = differences['added']
                     removed_mods = differences['removed']
                 
+                # if not "v" in version:
+                #     mdFile.new_paragraph(f"## {self.modpack_name} | v{version}")
+                # else:
+                #     mdFile.new_paragraph(f"## {self.modpack_name} | {version}")
+
                 if not "v" in version:
-                    mdFile.new_paragraph(f"## {self.modpack_name} | v{version}")
+                    mdFile.new_paragraph(f"## v{version}")
                 else:
-                    mdFile.new_paragraph(f"## {self.modpack_name} | {version}")
+                    mdFile.new_paragraph(f"## {version}")
 
                 mdFile.new_paragraph(f"*Fabric Loader {fabric_loader}* | *[Mod Updates](https://github.com/{repo_owner}/{repo_name}/blob/{repo_branch}/Changelogs/changelog_mods_{version}.md)*")
                 if improvements:
@@ -142,7 +154,7 @@ class ChangelogFactory:
                 if removed_mods:
                     mdFile.new_paragraph("### Removed Mods ❌")
                     mdFile.new_paragraph(markdown.remove_bracketed_text(markdown.markdown_list_maker(removed_mods)))
-                mdFile.new_paragraph("---")
+                #mdFile.new_paragraph("---")
         mdFile.create_md_file()
 
 

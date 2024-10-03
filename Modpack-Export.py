@@ -221,7 +221,7 @@ def main():
 
         if generate_primary_changelog:
             os.chdir(git_path)
-            changelog_factory.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods_path, repo_branch = repo_main_branch)
+            changelog_factory.build_markdown_changelog(repo_owner, repo_name, tempgit_path, packwiz_mods_path, repo_branch = repo_main_branch, mc_version=minecraft_version)
 
 
         #----------------------------------------
