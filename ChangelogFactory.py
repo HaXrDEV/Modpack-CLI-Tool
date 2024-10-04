@@ -31,28 +31,23 @@ class ChangelogFactory:
         toml_data_1 = {}
         toml_data_2 = {}
         
-        # Load TOML files from the first directory
-        try:
-            for filename in os.listdir(dir1):
-                if filename.endswith('.toml'):
-                    filepath = os.path.join(dir1, filename)
-                    with open(filepath, "r", encoding="utf8") as f:
-                        mod_toml = toml.load(f)
-                        side = str(mod_toml['side'])
-                        if side in ("both", "client", "server"):
-                            toml_data_1[filename] = toml.load(filepath)
-        except Exception as ex:
-            print(ex)
 
-        # Load TOML files from the second directory
-        for filename in os.listdir(dir2):
-            if filename.endswith('.toml'):
-                filepath = os.path.join(dir2, filename)
-                with open(filepath, "r", encoding="utf8") as f:
-                    mod_toml = toml.load(f)
-                    side = str(mod_toml['side'])
-                    if side in ("both", "client", "server"):
-                        toml_data_2[filename] = toml.load(filepath)
+        def local_load_toml_files_from_dir(dir, dict):
+            try:
+                for filename in os.listdir(dir):
+                    if filename.endswith('.toml'):
+                        filepath = os.path.join(dir, filename)
+                        with open(filepath, "r", encoding="utf8") as f:
+                            mod_toml = toml.load(f)
+                            side = str(mod_toml['side'])
+                            if side in ("both", "client", "server"):
+                                dict[filename] = toml.load(filepath)
+            except Exception as ex:
+                print(ex)
+
+        local_load_toml_files_from_dir(dir1, toml_data_1)
+        local_load_toml_files_from_dir(dir2, toml_data_2)
+
 
         # Prepare to store results
         results = {

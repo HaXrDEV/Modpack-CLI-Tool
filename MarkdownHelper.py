@@ -11,10 +11,17 @@ def remove_bracketed_text(input_str):
         # Return the cleaned string
         return result.strip()
 
-def codify_bracketed_text(input_str):
+def codify_bracketed_text(input_str, keep_brackets=False):
         """This method takes an input string and formats any text surrounded by square brackets [] to code."""
-        # This regex finds text inside brackets without removing them
-        return re.sub(r'(\[)([^\]]+)(\])', r'`\1\2\3`', input_str)
+        
+        if keep_brackets:
+            # This regex finds text inside brackets without removing them
+            return re.sub(r'(\[)([^\]]+)(\])', r'`\1\2\3`', input_str)
+        else:
+            # This regex finds text inside brackets
+            #return re.sub(r'\[([^\]]+)\]', r'`\1`', input_str)
+            return re.sub(r'(?<!\\)\[([^\]]+)\]', r'`\1`', input_str)
+            
 
 def markdown_list_maker(lines):
         """This method takes a yml object of strings, formats them and returns the result."""
