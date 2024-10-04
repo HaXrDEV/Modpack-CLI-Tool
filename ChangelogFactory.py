@@ -84,6 +84,7 @@ class ChangelogFactory:
         new_lst = lst[::-1]
         return new_lst
 
+
     def build_markdown_changelog(self, repo_owner, repo_name, tempgit_path, packwiz_mods_path, file_name="CHANGELOG", repo_branch = "main", mc_version=None):
         mdFile = MdUtils(file_name)
 
@@ -119,6 +120,7 @@ class ChangelogFactory:
                 improvements = self.get_changelog_value(changelog, "Changes/Improvements")
                 overview_legacy = self.get_changelog_value(changelog, "Update overview")
                 bug_fixes = self.get_changelog_value(changelog, "Bug Fixes")
+                config_changes = self.get_changelog_value(changelog, "Config Changes")
 
                 next_version_path = os.path.join(tempgit_path, str(next_version))
                 version_path = os.path.join(tempgit_path, str(version))
@@ -162,6 +164,9 @@ class ChangelogFactory:
                 if removed_mods:
                     mdFile.new_paragraph("### Removed Mods ❌")
                     mdFile.new_paragraph(markdown.remove_bracketed_text(markdown.markdown_list_maker(removed_mods)))
+                if config_changes:
+                    mdFile.new_paragraph("### Config Changes 📝")
+                    mdFile.new_paragraph(markdown.codify_bracketed_text(config_changes))
                 #mdFile.new_paragraph("---")
         mdFile.create_md_file()
 
