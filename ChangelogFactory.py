@@ -36,7 +36,11 @@ class ChangelogFactory:
             for filename in os.listdir(dir1):
                 if filename.endswith('.toml'):
                     filepath = os.path.join(dir1, filename)
-                    toml_data_1[filename] = toml.load(filepath)
+                    with open(filepath, "r", encoding="utf8") as f:
+                        mod_toml = toml.load(f)
+                        side = str(mod_toml['side'])
+                        if side in ("both", "client", "server"):
+                            toml_data_1[filename] = toml.load(filepath)
         except Exception as ex:
             print(ex)
 
@@ -44,7 +48,11 @@ class ChangelogFactory:
         for filename in os.listdir(dir2):
             if filename.endswith('.toml'):
                 filepath = os.path.join(dir2, filename)
-                toml_data_2[filename] = toml.load(filepath)
+                with open(filepath, "r", encoding="utf8") as f:
+                    mod_toml = toml.load(f)
+                    side = str(mod_toml['side'])
+                    if side in ("both", "client", "server"):
+                        toml_data_2[filename] = toml.load(filepath)
 
         # Prepare to store results
         results = {
