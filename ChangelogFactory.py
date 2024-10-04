@@ -59,7 +59,13 @@ class ChangelogFactory:
         # Check for added and modified files
         for filename, data in toml_data_2.items():
             if filename not in toml_data_1:
-                results['added'].append(data.get('name', filename))
+                name_data = data.get('name', filename)
+                side_data = data.get('side', filename)
+                if side_data != "both":
+                    side_str = f" [{str(side_data).capitalize()}]"
+                else:
+                    side_str = ""
+                results['added'].append(markdown.remove_bracketed_text(name_data) + side_str) # + str(data.get('side', filename)).capitalize()
             else:
                 # Compare "version" fields
                 version1 = toml_data_1[filename].get('filename', None)
@@ -70,7 +76,7 @@ class ChangelogFactory:
         # Check for removed files
         for filename in toml_data_1.keys():
             if filename not in toml_data_2:
-                results['removed'].append(toml_data_1[filename].get('name', filename))
+                results['removed'].append(markdown.remove_bracketed_text(toml_data_1[filename].get('name', filename)))
 
         return results
 
@@ -155,10 +161,10 @@ class ChangelogFactory:
                     mdFile.new_paragraph(markdown.markdown_list_maker(bug_fixes))
                 if added_mods:
                     mdFile.new_paragraph("### Added Mods ✅")
-                    mdFile.new_paragraph(markdown.remove_bracketed_text(markdown.markdown_list_maker(added_mods)))
+                    mdFile.new_paragraph(markdown.codify_bracketed_text(markdown.markdown_list_maker(added_mods)))
                 if removed_mods:
                     mdFile.new_paragraph("### Removed Mods ❌")
-                    mdFile.new_paragraph(markdown.remove_bracketed_text(markdown.markdown_list_maker(removed_mods)))
+                    mdFile.new_paragraph(markdown.codify_bracketed_text(markdown.markdown_list_maker(removed_mods)))
                 if config_changes:
                     mdFile.new_paragraph("### Config Changes 📝")
                     mdFile.new_paragraph(markdown.codify_bracketed_text(config_changes))
