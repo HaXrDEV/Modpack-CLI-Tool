@@ -63,7 +63,7 @@ class ChangelogFactory:
                 name_data = data.get('name', filename)
                 side_data = data.get('side', filename)
                 if side_data != "both":
-                    side_str = f" [{str(side_data).capitalize()}]"
+                    side_str = f" `{str(side_data).capitalize()}`"
                 else:
                     side_str = ""
                 results['added'].append(markdown.remove_bracketed_text(name_data) + side_str) # + str(data.get('side', filename)).capitalize()
@@ -72,7 +72,7 @@ class ChangelogFactory:
                 version1 = toml_data_1[filename].get('filename', None)
                 version2 = data.get('filename', None)
                 if version1 != version2:
-                    results['modified'].append((data.get('name', filename), version1, version2))
+                    results['modified'].append((markdown.remove_bracketed_text(data.get('name', filename)), version1, version2))
 
         # Check for removed files
         for filename in toml_data_1.keys():
@@ -165,10 +165,10 @@ class ChangelogFactory:
                     mdFile.new_paragraph(markdown.markdown_list_maker(bug_fixes))
                 if added_mods:
                     mdFile.new_paragraph("### Added Mods ✅")
-                    mdFile.new_paragraph(markdown.codify_bracketed_text(markdown.markdown_list_maker(added_mods)))
+                    mdFile.new_paragraph(markdown.markdown_list_maker(added_mods))
                 if removed_mods:
                     mdFile.new_paragraph("### Removed Mods ❌")
-                    mdFile.new_paragraph(markdown.codify_bracketed_text(markdown.markdown_list_maker(removed_mods)))
+                    mdFile.new_paragraph(markdown.markdown_list_maker(removed_mods))
                 if config_changes:
                     mdFile.new_paragraph("### Config Changes 📝")
                     mdFile.new_paragraph(markdown.codify_bracketed_text(config_changes))

@@ -41,7 +41,7 @@ def write_differences_to_markdown(differences, input_modpack_name, version1, ver
     if differences['added']:
         markdown_lines.append("## Added\n")
         for name in differences['added']:
-            markdown_lines.append(f"- {remove_bracketed_text(name)}")
+            markdown_lines.append(f"- {(name)}")
     else:
         markdown_lines.append("## Added\n- None")
     
@@ -49,7 +49,7 @@ def write_differences_to_markdown(differences, input_modpack_name, version1, ver
     if differences['removed']:
         markdown_lines.append("## Removed\n")
         for name in differences['removed']:
-            markdown_lines.append(f"- {remove_bracketed_text(name)}")
+            markdown_lines.append(f"- {(name)}")
     else:
         markdown_lines.append("## Removed\n- None")
     
@@ -57,7 +57,7 @@ def write_differences_to_markdown(differences, input_modpack_name, version1, ver
     if differences['modified']:
         markdown_lines.append("## Modified\n")
         for name, old_version, new_version in differences['modified']:
-            markdown_lines.append(f"- **{remove_bracketed_text(name)}**: Changed from `{old_version}` to `{new_version}`")
+            markdown_lines.append(f"- **{(name)}**: Changed from `{old_version}` to `{new_version}`")
     else:
         markdown_lines.append("## Modified\n- None")
     
