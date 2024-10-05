@@ -5,6 +5,7 @@ import re
 import toml
 import itertools
 import MarkdownHelper as markdown
+import GitHubHelper as github
 
 class ChangelogFactory:
     def __init__(self, changelog_dir, modpack_name, modpack_version):
@@ -143,11 +144,14 @@ class ChangelogFactory:
                 #     mdFile.new_paragraph(f"## {self.modpack_name} | v{version}")
                 # else:
                 #     mdFile.new_paragraph(f"## {self.modpack_name} | {version}")
-
-                if not "v" in version:
-                    mdFile.new_paragraph(f"## v{version}")
-                else:
-                    mdFile.new_paragraph(f"## {version}")
+                
+                if version == self.modpack_version: # and not github.check_tag_exists(repo_owner, repo_name, version)
+                        mdFile.new_paragraph(f"## v{version} `Work in progress`")
+                else: 
+                    if not "v" in version:
+                        mdFile.new_paragraph(f"## v{version}")
+                    else:
+                        mdFile.new_paragraph(f"## {version}")
 
                 mdFile.new_paragraph(f"*Fabric Loader {fabric_loader}* | *[Mod Updates](https://github.com/{repo_owner}/{repo_name}/blob/{repo_branch}/Changelogs/changelog_mods_{version}.md)*")
                 if improvements:
