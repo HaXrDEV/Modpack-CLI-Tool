@@ -57,16 +57,19 @@ class ChangelogFactory:
             'modified': []
         }
 
+
+        def local_get_side_str(side):
+            if side != "both":
+                return f" `{str(side).capitalize()}`"
+            else:
+                return ""
         # Check for added and modified files
         for filename, data in toml_data_2.items():
             if filename not in toml_data_1:
-                name_data = data.get('name', filename)
-                side_data = data.get('side', filename)
-                if side_data != "both":
-                    side_str = f" `{str(side_data).capitalize()}`"
-                else:
-                    side_str = ""
-                results['added'].append(markdown.remove_bracketed_text(name_data) + side_str) # + str(data.get('side', filename)).capitalize()
+                name_data_1 = data.get('name', filename)
+                side_data_1 = data.get('side', filename)
+                side_str_1 = local_get_side_str(side_data_1)
+                results['added'].append(markdown.remove_bracketed_text(name_data_1) + side_str_1) # + str(data.get('side', filename)).capitalize()
             else:
                 # Compare "version" fields
                 version1 = toml_data_1[filename].get('filename', None)
@@ -77,7 +80,9 @@ class ChangelogFactory:
         # Check for removed files
         for filename in toml_data_1.keys():
             if filename not in toml_data_2:
-                results['removed'].append(markdown.remove_bracketed_text(toml_data_1[filename].get('name', filename)))
+                side_data_2 = toml_data_1[filename].get('side', filename)
+                side_str_2 = local_get_side_str(side_data_2)
+                results['removed'].append(markdown.remove_bracketed_text(toml_data_1[filename].get('name', filename) + side_str_2))
 
         return results
 
